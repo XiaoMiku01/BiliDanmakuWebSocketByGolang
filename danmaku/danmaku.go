@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/XiaoMiku01/BiliDanmakuWebSocket/utils"
@@ -15,21 +16,33 @@ import (
 
 type BiliRoom struct {
 	roomId  string
+	realId  string
 	address string
 	token   string
 	conn    *websocket.Conn
 	recMsg  chan []byte
+	OutMsg  chan []byte
 	isAlive bool
 	timeout int
 }
 
 func NewBiliRoom(roomId string) *BiliRoom {
 	var recMsg = make(chan []byte, 10)
+	var OutMsg = make(chan []byte, 10)
 	var conn *websocket.Conn
+	var realId string
+	if len(roomId) < 5 {
+		realId, _ = getRealId(roomId)
+		log.Printf("房间号为短号，获取真实房间号: %s ", realId)
+	} else {
+		realId = roomId
+	}
 	return &BiliRoom{
 		roomId:  roomId,
+		realId:  realId,
 		conn:    conn,
 		recMsg:  recMsg,
+		OutMsg:  OutMsg,
 		isAlive: false,
 		timeout: 3,
 	}
@@ -70,7 +83,7 @@ func (b *BiliRoom) connect() error {
 
 func (b *BiliRoom) verify() error {
 	// 发送房间验证包
-	roomInfo := fmt.Sprintf(`{"uid": 0, "roomid": %s, "protover": 3, "platform": "web", "type": 2, "key": "%s"}`, b.roomId, b.token)
+	roomInfo := fmt.Sprintf(`{"uid": 0, "roomid": %s, "protover": 3, "platform": "web", "type": 2, "key": "%s"}`, b.realId, b.token)
 	err := b.conn.WriteMessage(websocket.BinaryMessage, __pack(roomInfo, 1, 7))
 	if err != nil {
 		log.Println("write:", err)
@@ -105,7 +118,7 @@ func (b *BiliRoom) decodeMsg() {
 		if !b.isAlive {
 			return
 		}
-		decodeMessage(msg)
+		decodeMessage(msg, b.OutMsg)
 	}
 }
 
@@ -119,7 +132,7 @@ func (b *BiliRoom) heartBeat() error {
 			b.isAlive = false
 			return err
 		}
-		log.Println("心跳包发送成功")
+		log.Println("[心跳包] 发送成功")
 
 	}
 }
@@ -127,7 +140,7 @@ func (b *BiliRoom) heartBeat() error {
 func (b *BiliRoom) getRoomInfo() error {
 	// 获取房间弹幕地址
 	ri := new(RoomInfo)
-	res, err := http.Get("https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?id=" + b.roomId)
+	res, err := http.Get("https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?id=" + b.realId)
 	if err != nil {
 		return err
 	}
@@ -145,6 +158,25 @@ func (b *BiliRoom) getRoomInfo() error {
 	return nil
 }
 
+func getRealId(roomId string) (string, error) {
+	// 真实房间号
+	ri := new(RealIdInfo)
+	res, err := http.Get("https://api.live.bilibili.com/xlive/web-room/v1/index/getRoomPlayInfo?room_id=" + roomId)
+	if err != nil {
+		return roomId, err
+	}
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+	err = json.Unmarshal(data, &ri)
+	if ri.Code != 0 {
+		err = errors.New("获取房间信息失败！")
+	}
+	if err != nil {
+		return roomId, err
+	}
+	realId := strconv.Itoa(ri.Data.RoomID)
+	return realId, nil
+}
 func __pack(s string, i int, j int) []byte {
 	// 字节流打包
 	format := []string{"H", "H", "I", "I"}
