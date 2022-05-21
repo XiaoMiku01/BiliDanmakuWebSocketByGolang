@@ -25,14 +25,14 @@ func decodeMessage(message []byte, outMsg chan []byte) {
 	}
 	switch ver {
 	case 0:
-		outMsg <- message
+		outMsg <- message[16:]
 		// log.Printf(string(message[16:]))
 
 	case 1:
 		if op == 3 {
 			popular, _ := strconv.ParseInt(fmt.Sprintf("%x", message[16:]), 16, 64)
 			// log.Printf("[人气]  %d", popular)
-			popmsg := fmt.Sprintf(`0000000000000000{"cmd":"POP","count": %d}`, popular)
+			popmsg := fmt.Sprintf(`{"cmd":"POP","count": %d}`, popular)
 			// fmt.Println(popmsg)
 			outMsg <- []byte(popmsg)
 		}

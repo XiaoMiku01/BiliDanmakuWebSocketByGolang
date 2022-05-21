@@ -1,5 +1,21 @@
 package bilistruct
 
+type MedalInfo struct {
+	AnchorRoomid     int    `json:"anchor_roomid"`
+	AnchorUname      string `json:"anchor_uname"`
+	GuardLevel       int    `json:"guard_level"`
+	IconID           int    `json:"icon_id"`
+	IsLighted        int    `json:"is_lighted"`
+	MedalColor       string `json:"medal_color"`
+	MedalColorBorder int    `json:"medal_color_border"`
+	MedalColorEnd    int    `json:"medal_color_end"`
+	MedalColorStart  int    `json:"medal_color_start"`
+	MedalLevel       int    `json:"medal_level"`
+	MedalName        string `json:"medal_name"`
+	Special          string `json:"special"`
+	TargetID         int    `json:"target_id"`
+}
+
 type MessageInfo struct {
 	Cmd  string      `json:"cmd"`
 	Info interface{} `json:"info"`
@@ -23,35 +39,21 @@ type SuperChatInfo struct {
 			GiftName string `json:"gift_name"`
 			Num      int    `json:"num"`
 		} `json:"gift"`
-		ID          int `json:"id"`
-		IsRanked    int `json:"is_ranked"`
-		IsSendAudit int `json:"is_send_audit"`
-		MedalInfo   struct {
-			AnchorRoomid     int    `json:"anchor_roomid"`
-			AnchorUname      string `json:"anchor_uname"`
-			GuardLevel       int    `json:"guard_level"`
-			IconID           int    `json:"icon_id"`
-			IsLighted        int    `json:"is_lighted"`
-			MedalColor       string `json:"medal_color"`
-			MedalColorBorder int    `json:"medal_color_border"`
-			MedalColorEnd    int    `json:"medal_color_end"`
-			MedalColorStart  int    `json:"medal_color_start"`
-			MedalLevel       int    `json:"medal_level"`
-			MedalName        string `json:"medal_name"`
-			Special          string `json:"special"`
-			TargetID         int    `json:"target_id"`
-		} `json:"medal_info"`
-		Message          string `json:"message"`
-		MessageFontColor string `json:"message_font_color"`
-		MessageTrans     string `json:"message_trans"`
-		Price            int    `json:"price"`
-		Rate             int    `json:"rate"`
-		StartTime        int    `json:"start_time"`
-		Time             int    `json:"time"`
-		Token            string `json:"token"`
-		TransMark        int    `json:"trans_mark"`
-		Ts               int    `json:"ts"`
-		UID              int    `json:"uid"`
+		ID               int       `json:"id"`
+		IsRanked         int       `json:"is_ranked"`
+		IsSendAudit      int       `json:"is_send_audit"`
+		MedalInfo        MedalInfo `json:"medal_info"`
+		Message          string    `json:"message"`
+		MessageFontColor string    `json:"message_font_color"`
+		MessageTrans     string    `json:"message_trans"`
+		Price            int       `json:"price"`
+		Rate             int       `json:"rate"`
+		StartTime        int       `json:"start_time"`
+		Time             int       `json:"time"`
+		Token            string    `json:"token"`
+		TransMark        int       `json:"trans_mark"`
+		Ts               int       `json:"ts"`
+		UID              int       `json:"uid"`
 		UserInfo         struct {
 			Face       string `json:"face"`
 			FaceFrame  string `json:"face_frame"`
@@ -66,6 +68,14 @@ type SuperChatInfo struct {
 			Uname      string `json:"uname"`
 			UserLevel  int    `json:"user_level"`
 		} `json:"user_info"`
+	} `json:"data"`
+	Roomid int `json:"roomid"`
+}
+
+type SuperChatDelete struct {
+	Cmd  string `json:"cmd"`
+	Data struct {
+		Ids []int `json:"ids"`
 	} `json:"data"`
 	Roomid int `json:"roomid"`
 }
@@ -145,21 +155,7 @@ type GiftInfo struct {
 		IsFirst           bool        `json:"is_first"`
 		IsSpecialBatch    int         `json:"is_special_batch"`
 		Magnification     int         `json:"magnification"`
-		MedalInfo         struct {
-			AnchorRoomid     int    `json:"anchor_roomid"`
-			AnchorUname      string `json:"anchor_uname"`
-			GuardLevel       int    `json:"guard_level"`
-			IconID           int    `json:"icon_id"`
-			IsLighted        int    `json:"is_lighted"`
-			MedalColor       int    `json:"medal_color"`
-			MedalColorBorder int    `json:"medal_color_border"`
-			MedalColorEnd    int    `json:"medal_color_end"`
-			MedalColorStart  int    `json:"medal_color_start"`
-			MedalLevel       int    `json:"medal_level"`
-			MedalName        string `json:"medal_name"`
-			Special          string `json:"special"`
-			TargetID         int    `json:"target_id"`
-		} `json:"medal_info"`
+		MedalInfo         MedalInfo   `json:"medal_info"`
 		NameColor         string      `json:"name_color"`
 		Num               int         `json:"num"`
 		OriginalGiftName  string      `json:"original_gift_name"`
@@ -180,5 +176,29 @@ type GiftInfo struct {
 		TotalCoin         int         `json:"total_coin"`
 		UID               int         `json:"uid"`
 		Uname             string      `json:"uname"`
+	} `json:"data"`
+}
+type ComboInfo struct {
+	Cmd  string `json:"cmd"`
+	Data struct {
+		Action         string      `json:"action"`
+		BatchComboID   string      `json:"batch_combo_id"`
+		BatchComboNum  int         `json:"batch_combo_num"`
+		ComboID        string      `json:"combo_id"`
+		ComboNum       int         `json:"combo_num"`
+		ComboTotalCoin int         `json:"combo_total_coin"`
+		Dmscore        int         `json:"dmscore"`
+		GiftID         int         `json:"gift_id"`
+		GiftName       string      `json:"gift_name"`
+		GiftNum        int         `json:"gift_num"`
+		IsShow         int         `json:"is_show"`
+		MedalInfo      MedalInfo   `json:"medal_info"`
+		NameColor      string      `json:"name_color"`
+		RUname         string      `json:"r_uname"`
+		Ruid           int         `json:"ruid"`
+		SendMaster     interface{} `json:"send_master"`
+		TotalNum       int         `json:"total_num"`
+		UID            int         `json:"uid"`
+		Uname          string      `json:"uname"`
 	} `json:"data"`
 }

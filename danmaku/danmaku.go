@@ -50,23 +50,25 @@ func NewBiliRoom(roomId string) *BiliRoom {
 
 func (b *BiliRoom) Start() {
 	for {
+
 		if !b.isAlive {
 			if err := b.getRoomInfo(); err != nil {
-				log.Println(err)
-				continue
+				log.Println("房间信息获取失败:", err)
+				goto reconnect
 			}
 			if err := b.connect(); err != nil {
-				log.Println(err)
-				continue
+				log.Println("房间连接失败:", err)
+				goto reconnect
 			}
 			if err := b.verify(); err != nil {
-				log.Println("房间连接失败:", err)
-				continue
+				log.Println("房间验证失败:", err)
+				goto reconnect
 			}
 			go b.readMessage()
 			go b.decodeMsg()
 			go b.heartBeat()
 		}
+	reconnect:
 		time.Sleep(time.Second * time.Duration(b.timeout))
 	}
 }
@@ -86,6 +88,7 @@ func (b *BiliRoom) verify() error {
 	roomInfo := fmt.Sprintf(`{"uid": 0, "roomid": %s, "protover": 3, "platform": "web", "type": 2, "key": "%s"}`, b.realId, b.token)
 	err := b.conn.WriteMessage(websocket.BinaryMessage, __pack(roomInfo, 1, 7))
 	if err != nil {
+		b.isAlive = false
 		log.Println("write:", err)
 		return err
 	}
@@ -132,7 +135,7 @@ func (b *BiliRoom) heartBeat() error {
 			b.isAlive = false
 			return err
 		}
-		log.Println("[心跳包] 发送成功")
+		// log.Println("[心跳包] 发送成功")
 
 	}
 }

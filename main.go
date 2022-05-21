@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"flag"
 	"log"
-	// "sync"
 
+	// "sync"
 	. "github.com/XiaoMiku01/BiliDanmakuWebSocket/bilistruct"
 	"github.com/XiaoMiku01/BiliDanmakuWebSocket/danmaku"
 )
@@ -13,6 +13,7 @@ import (
 func main() {
 	var roomId = flag.String("r", "", "直播间号")
 	var user_danmaku = map[int]string{}
+	var sc_list = map[int]SuperChatInfo{}
 	flag.Parse()
 	if *roomId == "" {
 		log.Println("请输入直播间号")
@@ -20,45 +21,55 @@ func main() {
 	}
 	dm := danmaku.NewBiliRoom(*roomId)
 	go dm.Start()
+
 	for message := range dm.OutMsg {
 		mi := new(MessageInfo)
-		json.Unmarshal(message[16:], &mi)
+		json.Unmarshal(message, &mi)
 		switch mi.Cmd {
 		case "POP":
 			// 人气
 			pi := new(PopInfo)
-			json.Unmarshal(message[16:], &pi)
-			log.Printf("[人气] %d", pi.Count)
+			json.Unmarshal(message, &pi)
+			// log.Printf("[人气] %d", pi.Count)
 
 		case "DANMU_MSG":
 			// 弹幕
-			log.Printf("[弹幕] %s: %s", mi.Info.([]interface{})[2].([]interface{})[1], mi.Info.([]interface{})[1])
+			// log.Printf("[弹幕] %s: %s", mi.Info.([]interface{})[2].([]interface{})[1], mi.Info.([]interface{})[1])
 			user_danmaku[int(mi.Info.([]interface{})[2].([]interface{})[0].(interface{}).(float64))] = mi.Info.([]interface{})[1].(string)
 		case "SUPER_CHAT_MESSAGE":
 			// SC
 			sci := new(SuperChatInfo)
-			json.Unmarshal(message[16:], &sci)
+			json.Unmarshal(message, &sci)
 			log.Printf("[SC] %d元 %s: %s %d", sci.Data.Price, sci.Data.UserInfo.Uname, sci.Data.Message, sci.Data.ID)
+			sc_list[int(sci.Data.ID)] = *sci
 		case "SUPER_CHAT_MESSAGE_JPN":
 
 		case "SUPER_CHAT_MESSAGE_DELETE":
 			// SC被删除
-			log.Printf("%s", string(message[16:]))
+			log.Printf("%s", string(message))
+			scd := new(SuperChatDelete)
+			json.Unmarshal(message, &scd)
+			sci := sc_list[int(scd.Data.Ids[0])]
+			log.Printf("[SC被删除] %s : %s", sci.Data.UserInfo.Uname, sci.Data.Message)
 
 		case "SEND_GIFT":
 			// 礼物
 			// log.Printf("%s", string(message[16:]))
 			gf := new(GiftInfo)
-			json.Unmarshal(message[16:], &gf)
-			log.Printf("[礼物] %s 赠送 %d个 %s %.1f元", gf.Data.Uname, gf.Data.Num, gf.Data.GiftName, float64(gf.Data.Price)/1000*float64(gf.Data.Num))
+			json.Unmarshal(message, &gf)
+			// log.Printf("[礼物] %s 赠送 %d个 %s %.1f元", gf.Data.Uname, gf.Data.Num, gf.Data.GiftName, float64(gf.Data.Price)/1000*float64(gf.Data.Num))
 		case "COMBO_SEND":
 			// 连击礼物
+			// log.Printf(string(message))
+			ci := new(ComboInfo)
+			json.Unmarshal(message, &ci)
+			// log.Printf("[礼物连击] %s 连续赠送 %d个 %s ", ci.Data.Uname, ci.Data.ComboNum, ci.Data.GiftName)
 		case "GUARD_BUY":
 			// 大航海
 		case "USER_TOAST_MSG":
 			// 大航海
 			ci := new(CrewInfo)
-			json.Unmarshal(message[16:], &ci)
+			json.Unmarshal(message, &ci)
 			// log.Printf("[大航海] %s 开通 %s * %d%s %d元", ci.Data.Username, ci.Data.RoleName, ci.Data.Num, ci.Data.Unit, ci.Data.Price/1000)
 		case "ONLINE_RANK_V2":
 
@@ -79,6 +90,8 @@ func main() {
 			// fmt.Println(string(message[16:]))
 		case "PREPARING":
 			log.Printf("已下播")
+			user_danmaku = map[int]string{}
+			sc_list = map[int]SuperChatInfo{}
 			// fmt.Println(string(message[16:]))
 		case "ROOM_CHANGE":
 
@@ -106,7 +119,7 @@ func main() {
 			// 禁言个人
 			// {"cmd":"ROOM_BLOCK_MSG","data":{"dmscore":30,"operator":2,"uid":1772442517,"uname":"晓小轩iAvA"},"uid":"1772442517","uname":"晓小轩iAvA"}
 			bi := new(BlockInfo)
-			json.Unmarshal(message[16:], &bi)
+			json.Unmarshal(message, &bi)
 			log.Printf("[禁言] %s 被禁言", bi.Data.Uname)
 			log.Printf("上一条弹幕是: %s", user_danmaku[bi.Data.UID])
 			// log.Printf("%s", string(message[16:]))
@@ -140,7 +153,7 @@ func main() {
 			// }
 		default:
 
-			log.Printf("%s", string(message[16:]))
+			log.Printf("%s", string(message))
 		}
 	}
 	// var w1 sync.WaitGroup
